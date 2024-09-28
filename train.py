@@ -1,0 +1,178 @@
+import time
+import numpy as np
+import pandas as pd
+import copy
+import os
+
+import torch
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
+
+
+def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer, num_epochs, steps=0, patience=10):
+    model.to(device)
+
+    # Ensure model_dir exists
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    # Load checkpoint if exists
+    start_epoch, best_val_loss = load_checkpoint(model, optimizer, None, model_dir)
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+    epochs_without_improvement = 0
+
+    # Define the learning rate scheduler (reduce LR on plateau)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
+
+    start_epoch, best_val_loss = load_checkpoint(model, optimizer, scheduler, model_dir)
+
+    for epoch in range(start_epoch, start_epoch + num_epochs):
+        model.train()
+        running_loss = 0.0
+
+        print(f'Starting epoch {epoch+1}/{start_epoch + num_epochs}')
+        
+        start_time = time.time()  # Start time for training phase
+
+        # Training loop
+        for i, batch in enumerate(train_loader):
+            if steps and (i >= steps):
+                break
+            images = batch['image'].to(device)
+            labels = batch['labels'].to(device).float()
+
+            optimizer.zero_grad()
+            outputs = model(images)
+            
+            loss = criterion(outputs, labels)
+
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+
+        train_time = time.time() - start_time  # End time for training phase
+
+        # Validation at the end of each epoch
+        start_time_val = time.time()  # Start time for validation phase
+
+        val_loss, val_auc, val_precision, val_recall, val_f1 = validate_model(model, val_loader, criterion)
+
+        val_time = time.time() - start_time_val  # End time for validation phase
+
+        epoch_time = time.time() - start_time  # End time for the entire epoch
+
+        print(f'Epoch [{epoch+1}/{num_epochs}], Validation Loss: {val_loss:.4f}, AUC: {val_auc:.4f}, '
+              f'Precision: {val_precision:.4f}, Recall: {val_recall:.4f}, F1-score: {val_f1:.4f}, '
+              f'Training Time: {train_time:.2f}s, Validation Time: {val_time:.2f}s, Total Time: {epoch_time:.2f}s')
+
+        # Early stopping check
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_wts = copy.deepcopy(model.state_dict())
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
+            print(f'No improvement in validation loss for {epochs_without_improvement} epoch(s).')
+
+        if epochs_without_improvement >= patience:
+            print(f'Early stopping after {epochs_without_improvement} epochs without improvement.')
+            break
+
+        # Update the learning rate based on validation loss
+        scheduler.step(val_loss)
+        current_lr = scheduler.optimizer.param_groups[0]['lr']
+
+        current_history = pd.DataFrame({'epoch': [epoch + 1],
+                                        'val_loss': [val_loss],
+                                        'val_auc': [val_auc],
+                                        'precision': [val_precision],
+                                        'recall': [val_recall],
+                                        'f1_score': [val_f1],
+                                        'lr': [current_lr],
+                                        'train_time': [train_time],
+                                        'val_time': [val_time],
+                                        'epoch_time': [epoch_time]})
+        
+        current_history.to_csv(os.path.join(model_dir, 'history.csv'), mode='a', header=False, index=False)
+
+        save_checkpoint(model, optimizer, scheduler, epoch, model_dir, best_val_loss)
+
+    model.load_state_dict(best_model_wts)
+    print('Training complete. Best Validation Loss:', best_val_loss)
+
+    torch.save(model.state_dict(), os.path.join(model_dir, 'best_model.pth'))
+    print(f'Best model saved to {os.path.join(model_dir, "best_model.pth")}')
+
+    return model
+
+def validate_model(model, val_loader, criterion):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.eval()
+    val_loss = 0.0
+    all_outputs = []
+    all_labels = []
+
+    with torch.no_grad():
+        for batch in val_loader:
+            images = batch['image'].to(device)
+            labels = batch['labels'].to(device).float()
+
+            outputs = model(images)
+            
+            loss = criterion(outputs, labels)
+            val_loss += loss.item()
+
+            all_outputs.append(torch.sigmoid(outputs).cpu().detach().numpy())  # Apply sigmoid
+            all_labels.append(labels.cpu().detach().numpy())
+
+    val_loss /= len(val_loader)  # Average validation loss
+    all_outputs = np.concatenate(all_outputs)  # Concatenate outputs for AUC calculation
+    all_labels = np.concatenate(all_labels)  # Concatenate labels for AUC calculation
+
+    # Threshold outputs for binary predictions
+    all_preds = (all_outputs > 0.5).astype(int)
+
+    # Calculate AUC for each label
+    auc_scores = []
+    for i in range(all_labels.shape[1]):  # Assuming all_labels is shape [num_samples, num_labels]
+        if np.unique(all_labels[:, i]).size > 1:  # Check for both classes in the label
+            auc = roc_auc_score(all_labels[:, i], all_outputs[:, i])
+            auc_scores.append(auc)
+        else:
+            auc_scores.append(np.nan)  # If only one class is present, AUC is undefined
+
+    mean_auc = np.nanmean(auc_scores)  # Calculate mean AUC ignoring NaN values
+
+    # Calculate precision, recall, and F1-score
+    precision = precision_score(all_labels, all_preds, average='micro')
+    recall = recall_score(all_labels, all_preds, average='micro')
+    f1 = f1_score(all_labels, all_preds, average='micro')
+
+    return val_loss, mean_auc, precision, recall, f1  # Return all metrics
+
+def save_checkpoint(model, optimizer, scheduler, epoch, model_dir, best_val_loss):
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'scheduler_state_dict': scheduler.state_dict(),
+        'epoch': epoch,
+        'best_val_loss': best_val_loss
+    }
+    torch.save(checkpoint, os.path.join(model_dir, 'checkpoint.pth'))
+    print(f'Model checkpoint saved at epoch {epoch+1}.')
+
+def load_checkpoint(model, optimizer, scheduler, model_dir):
+    checkpoint_path = os.path.join(model_dir, 'checkpoint.pth')
+    if os.path.exists(checkpoint_path):
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        print(f"Loaded checkpoint from epoch {checkpoint['epoch']+1}.")
+        return checkpoint['epoch'], checkpoint['best_val_loss']
+    else:
+        print("No checkpoint found, starting from scratch.")
+        return 0, float('inf')
