@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
 
-def undersample_negatives(df, ratio=0.3):
+def undersample_negatives(df, labels, ratio=0.3):
     
-    negative = df[df['No Finding'] == 1]
-    positive = df[df['No Finding'] == 0]
+    negative = df[df[labels].sum(axis=1) == 0]
+    positive = df[df[labels].sum(axis=1) > 0]
 
     print(f'Negatives before undersampling {len(negative)}')
 
@@ -23,8 +23,7 @@ def undersample_negatives(df, ratio=0.3):
 
 def main(args):
     # Get the labels and read the original metadata
-    labels = ['No Finding',
-            'Atelectasis',
+    labels = ['Atelectasis',
             'Cardiomegaly',
             'Consolidation',
             'Edema',
@@ -69,9 +68,9 @@ def main(args):
 
     # Undersample "No Findings"
     print(f'Applying a ratio of undersample of: {args}')
-    train_metadata = undersample_negatives(train_metadata,args)
-    val_metadata = undersample_negatives(val_metadata,args)
-    test_metadata = undersample_negatives(test_metadata,args)
+    train_metadata = undersample_negatives(train_metadata,labels,args)
+    val_metadata = undersample_negatives(val_metadata,labels,args)
+    test_metadata = undersample_negatives(test_metadata,labels,args)
 
 
     #Write all the new metadata as csv to load easier

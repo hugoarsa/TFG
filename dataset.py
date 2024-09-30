@@ -13,8 +13,7 @@ class ChestXRay(Dataset):
             image_dir: Directory with all the images with the labels.
             transform: Optional transform to be applied on a sample.
         """
-        self.classes = ['No Finding',
-                        'Atelectasis',
+        self.classes = ['Atelectasis',
                         'Cardiomegaly',
                         'Consolidation',
                         'Edema',

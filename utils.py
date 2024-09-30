@@ -192,15 +192,15 @@ def get_loss(loss_type='asl1', counts=None, device='cpu', beta=0.99):
 def get_model(model_name='dense121', pretrained=True):
 
     if model_name == 'res18':
-        model = ResNet18(num_classes=15, pretrained=pretrained)
+        model = ResNet18(num_classes=14, pretrained=pretrained)
     elif model_name == 'res50':
-        model = ResNet50(num_classes=15, pretrained=pretrained)
+        model = ResNet50(num_classes=14, pretrained=pretrained)
     elif model_name == 'dense121':
-        model = DenseNet121(num_classes=15, pretrained=pretrained)
+        model = DenseNet121(num_classes=14, pretrained=pretrained)
     elif model_name == 'efficientb0':
-        model = EfficientNetB0(num_classes=15, pretrained=pretrained)
+        model = EfficientNetB0(num_classes=14, pretrained=pretrained)
     elif model_name == 'efficientb3':
-        model = EfficientNetB3(num_classes=15, pretrained=pretrained)
+        model = EfficientNetB3(num_classes=14, pretrained=pretrained)
     
     else:
         raise ValueError(f"Unknown model_name '{model_name}'.")

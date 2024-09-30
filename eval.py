@@ -31,7 +31,7 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     val_loss = 0.0
     all_outputs = []
     all_labels = []
-    classes = ['No Finding', 'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 
+    classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 
                'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 
                'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
@@ -66,7 +66,7 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
         else:
             threshold = Find_Optimal_Cutoff(all_labels[:, i], all_outputs[:, i])
         all_preds[:, i] = (all_outputs[:, i] > threshold).astype(int)
-
+        
     print('Plotting and storing')
 
     # Plot ROC Curves
@@ -98,17 +98,21 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
         plt.savefig(os.path.join(results_dir, f'confusion_matrix_{class_name}.png'))
         plt.close()
 
+    print('Classification report')
+
     # Classification Report
-    report = classification_report(all_labels, all_preds, target_names=classes, output_dict=True)
+    report = classification_report(all_labels, all_preds, target_names=classes, output_dict=True, zero_division=0)
 
     # Calculate averaged metrics
     accuracy_per_class = [accuracy_score(all_labels[:, i], all_preds[:, i]) for i in range(all_labels.shape[1])]
     mean_accuracy = np.mean(accuracy_per_class)
     mean_auc = np.nanmean(auc_scores)  # Averaged AUROC
 
-    precision_micro = precision_score(all_labels, all_preds, average='micro')
-    recall_micro = recall_score(all_labels, all_preds, average='micro')
-    f1_micro = f1_score(all_labels, all_preds, average='micro')
+    print('Micro')
+
+    precision_micro = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
+    recall_micro = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
+    f1_micro = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
 
     # Output classification report per class and overall metrics
     print(f'Validation Loss: {val_loss:.4f}')
