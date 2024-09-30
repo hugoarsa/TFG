@@ -25,7 +25,7 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
     best_model_wts = copy.deepcopy(model.state_dict())
     epochs_without_improvement = 0
 
-    for epoch in range(start_epoch, start_epoch + num_epochs - 1):
+    for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()
         running_loss = 0.0
 
