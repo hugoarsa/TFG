@@ -20,6 +20,11 @@ import os
 normalize = transforms.Normalize([0.485, 0.456, 0.406],
                                  [0.229, 0.224, 0.225])
 
+# Ensure the directory exists
+def ensure_dir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 # Function to create data loaders accodring to the selected image size and batch_size
 def make_data_loaders(train_csv,val_csv,image_dir,batch_size,image_size):
     
@@ -63,7 +68,7 @@ def Find_Optimal_Cutoff(target, predicted):
     i = np.arange(len(tpr))
     roc = pd.DataFrame({'tf': pd.Series(tpr - (1 - fpr), index=i), 'threshold': pd.Series(threshold, index=i)})
     roc_t = roc.iloc[(roc.tf - 0).abs().argsort()[:1]]
-    return list(roc_t['threshold'])
+    return list(roc_t['threshold']) # [0]??
 
 
 # Idea extacted from the [https://arxiv.org/pdf/1901.05555] paper "Class-Balanced Loss Based on Effective Number of Samples"

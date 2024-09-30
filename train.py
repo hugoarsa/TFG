@@ -17,13 +17,9 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    # Load checkpoint if exists
-    start_epoch, best_val_loss = load_checkpoint(model, optimizer, None, model_dir)
-
     best_model_wts = copy.deepcopy(model.state_dict())
     epochs_without_improvement = 0
 
-    # Define the learning rate scheduler (reduce LR on plateau)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
 
     start_epoch, best_val_loss = load_checkpoint(model, optimizer, scheduler, model_dir)
