@@ -7,13 +7,25 @@ from sklearn.metrics import (roc_auc_score, roc_curve, confusion_matrix, classif
                              precision_score, recall_score, f1_score, accuracy_score)
 import seaborn as sns
 
+from tqdm import tqdm
+
 from utils import Find_Optimal_Cutoff, ensure_dir
 
 
 
 # Evaluation function
-def evaluate_model(model, val_loader, criterion, model_dir, use_static_threshold=True):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_threshold=True):
+    
+    model_path = os.path.join(model_dir, 'best_model.pth')
+
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"No model found at {model_path}. Please train the model before evaluation.")
+    
+    model.load_state_dict(torch.load(model_path))
+    print('Model loaded succesfully and proceeding to eval')
+
+    model.to(device)
+
     model.eval()
     
     val_loss = 0.0
@@ -28,7 +40,7 @@ def evaluate_model(model, val_loader, criterion, model_dir, use_static_threshold
     ensure_dir(results_dir)
 
     with torch.no_grad():
-        for batch in val_loader:
+        for batch in tqdm(test_loader, desc="Evaluating"):
             images = batch['image'].to(device)
             labels = batch['labels'].to(device).float()
 
@@ -39,12 +51,14 @@ def evaluate_model(model, val_loader, criterion, model_dir, use_static_threshold
             all_outputs.append(torch.sigmoid(outputs).cpu().detach().numpy())
             all_labels.append(labels.cpu().detach().numpy())
 
-    val_loss /= len(val_loader)
+    val_loss /= len(test_loader)
     all_outputs = np.concatenate(all_outputs)
     all_labels = np.concatenate(all_labels)
 
     # Threshold outputs using either a static threshold or optimal cutoff per class
     all_preds = np.zeros_like(all_outputs)
+
+    print('Obtaining Cutoff for Predictions')
     
     for i in range(all_labels.shape[1]):
         if use_static_threshold:
@@ -52,6 +66,8 @@ def evaluate_model(model, val_loader, criterion, model_dir, use_static_threshold
         else:
             threshold = Find_Optimal_Cutoff(all_labels[:, i], all_outputs[:, i])
         all_preds[:, i] = (all_outputs[:, i] > threshold).astype(int)
+
+    print('Plotting and storing')
 
     # Plot ROC Curves
     plt.figure(figsize=(10, 8))

@@ -1,0 +1,7 @@
+# Ignore heavy checkpoints
+
+checkpoint.pth
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc

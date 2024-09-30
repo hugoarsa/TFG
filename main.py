@@ -9,25 +9,24 @@ import os
 
 from utils import *
 from train import *
+from eval import *
 
 
 
 def main(args):
-    MODEL_NAME = f'{args.model_name}_{args.max_epochs}epochs_{args.loss}_{args.opt}'
+    MODEL_NAME = f'{args.model_name}_{args.loss}_{args.opt}'
 
-    if not os.path.isdir(args.save_dir):
-        os.mkdir(args.save_dir)
+    ensure_dir(args.save_dir)
 
     model_dir = os.path.join(args.save_dir, MODEL_NAME)
 
-    if os.path.isdir(model_dir):
-        shutil.rmtree(model_dir)
-    os.mkdir(model_dir)
+    ensure_dir(model_dir)
 
-    # Potentially setting seeds
+    # Potentially setting seeds (not now)
 
     dataloaders, dataset_sizes, class_counts = make_data_loaders(args.train_csv, 
-                                                                 args.val_csv, 
+                                                                 args.val_csv,
+                                                                 args.test_csv, 
                                                                  args.image_dir, 
                                                                  args.batch_size, 
                                                                  args.img_size)
@@ -53,7 +52,20 @@ def main(args):
                             args.max_epochs,
                             args.num_iter)
         
-        # Here we could eval tomorrow
+        evaluate_model(device,
+                       model,
+                       dataloaders['test'],
+                       criterion,
+                       model_dir,
+                       False)
+        
+    elif args.mode == 'eval':
+        evaluate_model(device,
+                       model,
+                       dataloaders['test'],
+                       criterion,
+                       model_dir,
+                       False)
 
 
     # elif args.mode == 'pred'
@@ -70,11 +82,12 @@ if __name__ == '__main__':
     parser.add_argument('--image_dir', default='./resized_images', type=str)
     parser.add_argument('--train_csv', default='./labels/train_metadata.csv', type=str)
     parser.add_argument('--val_csv', default='./labels/val_metadata.csv', type=str)
+    parser.add_argument('--test_csv', default='./labels/test_metadata.csv', type=str)
     parser.add_argument('--save_dir', default='./saves', type=str, help="directory where logs and model checkpoints will be saved")
-    parser.add_argument('--model_name', default='res50', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
+    parser.add_argument('--model_name', default='res18', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
     parser.add_argument('--pretrained', default=True, type=bool, help="true if model is pretrained by ImageNet")
-    parser.add_argument('--max_epochs', default=50, type=int, help="maximum number of epochs for training")
-    parser.add_argument('--num_iter', default=20, type=int, help="maximum iterations taken per epoch")
+    parser.add_argument('--max_epochs', default=10, type=int, help="maximum number of epochs for training")
+    parser.add_argument('--num_iter', default=50, type=int, help="maximum iterations taken per epoch")
     parser.add_argument('--batch_size', default=64, type=int, help="batch size for data loaders")
     parser.add_argument('--img_size', default=256, type=int, help="desired size for image dataset")
     parser.add_argument('--loss', default='asl1', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])

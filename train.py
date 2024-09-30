@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import copy
 import os
+from tqdm import tqdm
 
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -10,30 +11,30 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 
 
-def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer, num_epochs, steps=0, patience=10):
+def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer, num_epochs, steps=None, patience=10):
     model.to(device)
 
     # Ensure model_dir exists
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    epochs_without_improvement = 0
-
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
 
     start_epoch, best_val_loss = load_checkpoint(model, optimizer, scheduler, model_dir)
 
-    for epoch in range(start_epoch, start_epoch + num_epochs):
+    best_model_wts = copy.deepcopy(model.state_dict())
+    epochs_without_improvement = 0
+
+    for epoch in range(start_epoch, start_epoch + num_epochs - 1):
         model.train()
         running_loss = 0.0
 
-        print(f'Starting epoch {epoch+1}/{start_epoch + num_epochs}')
+        print(f'Starting epoch {epoch}/{start_epoch + num_epochs - 1}')
         
         start_time = time.time()  # Start time for training phase
 
         # Training loop
-        for i, batch in enumerate(train_loader):
+        for i, batch in enumerate(tqdm(train_loader, desc="Training")):
             if steps and (i >= steps):
                 break
             images = batch['image'].to(device)
@@ -60,7 +61,7 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
 
         epoch_time = time.time() - start_time  # End time for the entire epoch
 
-        print(f'Epoch [{epoch+1}/{num_epochs}], Validation Loss: {val_loss:.4f}, AUC: {val_auc:.4f}, '
+        print(f'Epoch [{epoch}/{num_epochs + start_epoch - 1}], Validation Loss: {val_loss:.4f}, AUC: {val_auc:.4f}, '
               f'Precision: {val_precision:.4f}, Recall: {val_recall:.4f}, F1-score: {val_f1:.4f}, '
               f'Training Time: {train_time:.2f}s, Validation Time: {val_time:.2f}s, Total Time: {epoch_time:.2f}s')
 
@@ -81,7 +82,7 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
         scheduler.step(val_loss)
         current_lr = scheduler.optimizer.param_groups[0]['lr']
 
-        current_history = pd.DataFrame({'epoch': [epoch + 1],
+        current_history = pd.DataFrame({'epoch': [epoch],
                                         'val_loss': [val_loss],
                                         'val_auc': [val_auc],
                                         'precision': [val_precision],
@@ -112,7 +113,7 @@ def validate_model(model, val_loader, criterion):
     all_labels = []
 
     with torch.no_grad():
-        for batch in val_loader:
+        for batch in tqdm(val_loader, desc="Validating"):
             images = batch['image'].to(device)
             labels = batch['labels'].to(device).float()
 
@@ -158,7 +159,7 @@ def save_checkpoint(model, optimizer, scheduler, epoch, model_dir, best_val_loss
         'best_val_loss': best_val_loss
     }
     torch.save(checkpoint, os.path.join(model_dir, 'checkpoint.pth'))
-    print(f'Model checkpoint saved at epoch {epoch+1}.')
+    print(f'Model checkpoint saved at epoch {epoch}.')
 
 def load_checkpoint(model, optimizer, scheduler, model_dir):
     checkpoint_path = os.path.join(model_dir, 'checkpoint.pth')
@@ -167,8 +168,8 @@ def load_checkpoint(model, optimizer, scheduler, model_dir):
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        print(f"Loaded checkpoint from epoch {checkpoint['epoch']+1}.")
-        return checkpoint['epoch'], checkpoint['best_val_loss']
+        print(f"Loaded checkpoint from epoch {checkpoint['epoch']}.")
+        return checkpoint['epoch'] + 1, checkpoint['best_val_loss']
     else:
         print("No checkpoint found, starting from scratch.")
-        return 0, float('inf')
+        return 1, float('inf')

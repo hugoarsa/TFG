@@ -17,8 +17,7 @@ from models import *
 
 import os
 
-normalize = transforms.Normalize([0.485, 0.456, 0.406],
-                                 [0.229, 0.224, 0.225])
+
 
 # Ensure the directory exists
 def ensure_dir(directory):
@@ -26,8 +25,9 @@ def ensure_dir(directory):
         os.makedirs(directory)
 
 # Function to create data loaders accodring to the selected image size and batch_size
-def make_data_loaders(train_csv,val_csv,image_dir,batch_size,image_size):
-    
+def make_data_loaders(train_csv,val_csv,test_csv,image_dir,batch_size,image_size):
+    normalize = transforms.Normalize([0.485, 0.456, 0.406],
+                                     [0.229, 0.224, 0.225])
 
     train_transforms = transforms.Compose([
     transforms.Resize(image_size),
@@ -45,11 +45,13 @@ def make_data_loaders(train_csv,val_csv,image_dir,batch_size,image_size):
 
     train_dataset = ChestXRay(df_dir=train_csv, image_dir=image_dir, transform=train_transforms)
     val_dataset = ChestXRay(df_dir=val_csv, image_dir=image_dir, transform=val_transforms)
+    test_dataset = ChestXRay(df_dir=test_csv, image_dir=image_dir, transform=val_transforms)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return {'train': train_loader, 'val': val_loader}, {'train':len(train_dataset),'val':len(val_dataset)}, train_dataset.class_count
+    return {'train': train_loader, 'val': val_loader, 'test': test_loader}, {'train':len(train_dataset),'val':len(val_dataset),'test':len(test_dataset)}, train_dataset.class_count
     
 
 # Code extracted from MIT licensed code Copyright (c) 2021 Alinstein Jose
