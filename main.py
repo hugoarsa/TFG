@@ -50,7 +50,8 @@ def main(args):
                             criterion,
                             optimizer,
                             args.max_epochs,
-                            args.num_iter)
+                            args.num_iter,
+                            args.s_patience)
         
         evaluate_model(device,
                        model,
@@ -91,11 +92,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_iter', default=None, type=int, help="maximum iterations taken per epoch")
     parser.add_argument('--batch_size', default=64, type=int, help="batch size for data loaders")
     parser.add_argument('--img_size', default=256, type=int, help="desired size for image dataset")
-    parser.add_argument('--loss', default='asl1', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
+    parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adadelta','Adam','AdamW','RMSprop'])
-    parser.add_argument('--patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
-
+    parser.add_argument('--e_patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
+    parser.add_argument('--s_patience', default=3, type=int, help="patience for the scheduler")
     args = parser.parse_args()
 
     print(args)
