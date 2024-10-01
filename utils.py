@@ -177,9 +177,9 @@ def get_loss(loss_type='asl1', counts=None, device='cpu', beta=0.99):
     elif loss_type == 'asl1':
         loss_fn = AsymmetricLoss(gamma_neg=2, gamma_pos=1, clip=0)
     elif loss_type == 'asl2':
-        loss_fn = AsymmetricLoss(gamma_neg=4, gamma_pos=1, clip=0.05)
+        loss_fn = AsymmetricLoss(gamma_neg=2, gamma_pos=1, clip=0.025)
     elif loss_type == 'asl3':
-        loss_fn = AsymmetricLoss(gamma_neg=8, gamma_pos=1, clip=0.05)
+        loss_fn = AsymmetricLoss(gamma_neg=4, gamma_pos=1, clip=0.05)
     elif loss_type == 'focal':
         loss_fn = AsymmetricLoss(gamma_neg=2, gamma_pos=2, clip=0)
     
