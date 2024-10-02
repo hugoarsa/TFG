@@ -14,7 +14,7 @@ from eval import *
 
 
 def main(args):
-    MODEL_NAME = f'{args.model_name}_{args.loss}_{args.opt}'
+    MODEL_NAME = f'shedulerexp_{args.model_name}_{args.loss}_{args.scheduler}_{args.opt}'
 
     ensure_dir(args.save_dir)
 
@@ -33,12 +33,16 @@ def main(args):
 
     model = get_model(args.model_name,args.pretrained)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 
     counts = np.array(class_counts)
     criterion = get_loss(args.loss, counts, device)
 
     optimizer = get_optimizer(model.parameters(), args.opt, args.lr)
+
+    print(args.scheduler)
+
+    scheduler = get_scheduler(optimizer,args.scheduler)
 
     if args.mode == 'train':
 
@@ -49,6 +53,7 @@ def main(args):
                             dataloaders['val'],
                             criterion,
                             optimizer,
+                            scheduler,
                             args.max_epochs,
                             args.num_iter,
                             args.s_patience)
@@ -95,6 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adadelta','Adam','AdamW','RMSprop'])
+    parser.add_argument('--scheduler', default='plateau',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
     parser.add_argument('--e_patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
     parser.add_argument('--s_patience', default=3, type=int, help="patience for the scheduler")
     args = parser.parse_args()

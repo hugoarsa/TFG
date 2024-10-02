@@ -11,14 +11,12 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 
 
-def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer, num_epochs, steps=None, s_patience=3, patience=10):
+def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer,scheduler, num_epochs, steps=None, s_patience=3, patience=10):
     model.to(device)
 
     # Ensure model_dir exists
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
 
     start_epoch, best_val_loss = load_checkpoint(model, optimizer, scheduler, model_dir)
 
@@ -77,9 +75,11 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
         if epochs_without_improvement >= patience:
             print(f'Early stopping after {epochs_without_improvement} epochs without improvement.')
             break
-
-        # Update the learning rate based on validation loss
-        scheduler.step(val_loss)
+        
+        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            scheduler.step(val_loss)
+        else:
+            scheduler.step()
         current_lr = scheduler.optimizer.param_groups[0]['lr']
 
         current_history = pd.DataFrame({'epoch': [epoch],
