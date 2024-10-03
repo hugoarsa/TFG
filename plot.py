@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import argparse
+import glob
 
 def plot_history(args):
     data_frames = {}
@@ -22,18 +23,30 @@ def plot_history(args):
 
     if args.target_var not in vars:
         raise ValueError(f"Invalid selected variable: {args.target_var}. Valid options are: {list(vars.keys())}")
-    
+    print(args.pattern)
+    # If a pattern is provided, find matching folders
+    if args.pattern:
+        print('here')
+        folders = glob.glob(os.path.join(args.saves_dir, args.pattern))
+    elif args.folders:
+        # If specific folder names are provided, use those
+        folders = [os.path.join(args.saves_dir, folder) for folder in args.folders]
+    else:
+        # Default to all folders if no pattern or specific list is provided
+        folders = [os.path.join(args.saves_dir, folder) for folder in os.listdir(args.saves_dir)]
 
-    for subfolder in os.listdir(args.saves_dir):
-        subfolder_path = os.path.join(args.saves_dir, subfolder)
-        
-        if os.path.isdir(subfolder_path):
-            csv_path = os.path.join(subfolder_path, 'history.csv')
-            if os.path.isfile(csv_path):
-                df = pd.read_csv(csv_path, header=None)
-                
-                # Add the data frame to the dictionary
-                data_frames[subfolder] = df
+    print(folders)
+    
+    # Filter only directories
+    folders = [folder for folder in folders if os.path.isdir(folder)]
+    
+    # Load the CSV files from the selected folders
+    for subfolder_path in folders:
+        csv_path = os.path.join(subfolder_path, 'history.csv')
+        if os.path.isfile(csv_path):
+            df = pd.read_csv(csv_path, header=None)
+
+            data_frames[os.path.basename(subfolder_path)] = df
 
     # Plotting
     plt.figure(figsize=(12, 6))
@@ -60,7 +73,9 @@ if __name__ == '__main__':
     parser.add_argument('--output_dir', default='./docu', type=str)
     parser.add_argument('--target_var', default='val_auc', type=str, help="Variable to plot")
     parser.add_argument('--name', default='loss_selection_plot.png', type=str)
-
+    parser.add_argument('--pattern', type=str, help="Pattern to match folder names (e.g., 'schedulerexp*')")
+    parser.add_argument('--folders', nargs='+', help="List of specific folder names to include")
+    
     args = parser.parse_args()
 
     print(args)

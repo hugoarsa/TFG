@@ -14,7 +14,7 @@ from eval import *
 
 
 def main(args):
-    MODEL_NAME = f'shedulerexp_{args.model_name}_{args.loss}_{args.scheduler}_{args.opt}'
+    MODEL_NAME = f'shedulerexp_{args.model}_{args.loss}_{args.scheduler}_{args.opt}'
 
     ensure_dir(args.save_dir)
 
@@ -31,7 +31,7 @@ def main(args):
                                                                  args.batch_size, 
                                                                  args.img_size)
 
-    model = get_model(args.model_name,args.pretrained)
+    model = get_model(args.model,args.pretrained)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('--val_csv', default='./labels/val_metadata.csv', type=str)
     parser.add_argument('--test_csv', default='./labels/test_metadata.csv', type=str)
     parser.add_argument('--save_dir', default='./saves', type=str, help="directory where logs and model checkpoints will be saved")
-    parser.add_argument('--model_name', default='res18', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
+    parser.add_argument('--model', default='res18', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
     parser.add_argument('--pretrained', default=True, type=bool, help="true if model is pretrained by ImageNet")
     parser.add_argument('--thresh', default=False, type=bool, help="true eval is to use dynamic threshold")
     parser.add_argument('--max_epochs', default=20, type=int, help="maximum number of epochs for training")
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('--img_size', default=256, type=int, help="desired size for image dataset")
     parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
-    parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adadelta','Adam','AdamW','RMSprop'])
+    parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adamax','Adam','AdamW','RMSprop'])
     parser.add_argument('--scheduler', default='plateau',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
     parser.add_argument('--e_patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
     parser.add_argument('--s_patience', default=3, type=int, help="patience for the scheduler")

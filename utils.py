@@ -4,7 +4,7 @@ from torchvision import transforms
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.optim import SGD, Adadelta, Adam, RMSprop, AdamW
+from torch.optim import SGD, Adamax, Adam, RMSprop, AdamW
 from torch.optim.lr_scheduler import CyclicLR, CosineAnnealingLR, ReduceLROnPlateau, _LRScheduler
 
 from sklearn.metrics import roc_curve
@@ -236,8 +236,8 @@ def get_optimizer(params, optimizer='Adam', lr=1e-4, momentum=0.9, weight_decay=
         return SGD(params, lr=lr, momentum=momentum, weight_decay=weight_decay)
     elif optimizer == 'SGD_Nesterov':
         return SGD(params, lr=lr, momentum=momentum, weight_decay=weight_decay, nesterov=True)
-    elif optimizer == 'Adadelta':
-        return Adadelta(params, lr=lr, weight_decay=weight_decay)
+    elif optimizer == 'Adamax':
+        return Adamax(params, lr=lr, weight_decay=weight_decay)
     elif optimizer == 'Adam':
         return Adam(params, lr=lr, weight_decay=weight_decay)
     elif optimizer == 'AdamW':
@@ -305,16 +305,16 @@ def get_scheduler(optimizer, name='cyclic'):
     elif name == 'plateau1':
         scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=6)
     elif name == 'cyclic':
-        scheduler = CyclicLR(optimizer, base_lr=0.001, max_lr=0.006, step_size_up=2000, mode='triangular')
+        scheduler = CyclicLR(optimizer, base_lr=0.001, max_lr=0.01, step_size_up=500, mode='triangular')
     elif name == 'cosine':
-        scheduler = CosineAnnealingLR(optimizer, T_max=30, eta_min=0)
+        scheduler = CosineAnnealingLR(optimizer, T_max=10, eta_min=0)
     elif name == 'warmupcosine':
         scheduler = CosineAnnealingWarmupRestarts(optimizer, 
-                                          first_cycle_steps=15,
-                                          cycle_mult=1.5,
+                                          first_cycle_steps=12,
+                                          cycle_mult=1,
                                           max_lr=0.01,
                                           min_lr=0.0001,
-                                          warmup_steps=5,
+                                          warmup_steps=3,
                                           gamma=0.8)
     else:
         raise ValueError(f"Unknown scheduler type '{name}'.")
