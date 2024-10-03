@@ -23,24 +23,14 @@ def plot_history(args):
 
     if args.target_var not in vars:
         raise ValueError(f"Invalid selected variable: {args.target_var}. Valid options are: {list(vars.keys())}")
-    print(args.pattern)
-    # If a pattern is provided, find matching folders
-    if args.pattern:
-        print('here')
-        folders = glob.glob(os.path.join(args.saves_dir, args.pattern))
-    elif args.folders:
-        # If specific folder names are provided, use those
+    
+    if args.folders:
         folders = [os.path.join(args.saves_dir, folder) for folder in args.folders]
     else:
-        # Default to all folders if no pattern or specific list is provided
         folders = [os.path.join(args.saves_dir, folder) for folder in os.listdir(args.saves_dir)]
 
-    print(folders)
-    
-    # Filter only directories
     folders = [folder for folder in folders if os.path.isdir(folder)]
     
-    # Load the CSV files from the selected folders
     for subfolder_path in folders:
         csv_path = os.path.join(subfolder_path, 'history.csv')
         if os.path.isfile(csv_path):
@@ -48,32 +38,24 @@ def plot_history(args):
 
             data_frames[os.path.basename(subfolder_path)] = df
 
-    # Plotting
     plt.figure(figsize=(12, 6))
-    
     for subfolder, df in data_frames.items():
         plt.plot(df[vars['epoch']], df[vars[args.target_var]], label=subfolder)
 
-    
-    # Customize the plot
     plt.title(f'Plot of {args.target_var} over Epochs')
     plt.xlabel('Epoch')
     plt.ylabel(args.target_var)
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    
-    # Show or save the plot
     plt.savefig(os.path.join(args.output_dir, args.name))
 
 if __name__ == '__main__':
-    # Command-line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--saves_dir', default='./saves', type=str)
     parser.add_argument('--output_dir', default='./docu', type=str)
     parser.add_argument('--target_var', default='val_auc', type=str, help="Variable to plot")
     parser.add_argument('--name', default='loss_selection_plot.png', type=str)
-    parser.add_argument('--pattern', type=str, help="Pattern to match folder names (e.g., 'schedulerexp*')")
     parser.add_argument('--folders', nargs='+', help="List of specific folder names to include")
     
     args = parser.parse_args()

@@ -6,7 +6,6 @@ import os
 from tqdm import tqdm
 
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 
@@ -47,6 +46,9 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
             optimizer.step()
 
             running_loss += loss.item()
+
+            if isinstance(scheduler, torch.optim.lr_scheduler.CyclicLR):
+                scheduler.step()
 
         train_time = time.time() - start_time  # End time for training phase
 

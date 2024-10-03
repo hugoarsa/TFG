@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision
+import matplotlib.pyplot as plt
 
 import shutil
 import os
@@ -11,10 +12,12 @@ from utils import *
 from train import *
 from eval import *
 
-
+classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 
+               'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 
+               'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
 def main(args):
-    MODEL_NAME = f'shedulerexp_{args.model}_{args.loss}_{args.scheduler}_{args.opt}'
+    MODEL_NAME = f'{args.model}_{args.loss}_{args.scheduler}_{args.opt}'
 
     ensure_dir(args.save_dir)
 
@@ -39,8 +42,6 @@ def main(args):
     criterion = get_loss(args.loss, counts, device)
 
     optimizer = get_optimizer(model.parameters(), args.opt, args.lr)
-
-    print(args.scheduler)
 
     scheduler = get_scheduler(optimizer,args.scheduler)
 
@@ -72,9 +73,66 @@ def main(args):
                        criterion,
                        model_dir,
                        False)
+        
+    elif args.mode == 'pred':
+        p_model_dir = os.path.join(args.save_dir, args.pred_model)
+        p_image_dir = os.path.join(args.image_dir, args.pred_image)
+
+        p_model_path = os.path.join(p_model_dir, 'best_model.pth')
+
+        if not os.path.exists(p_model_path):
+            raise FileNotFoundError(f"No model found at {p_model_path}. Please train the model before evaluation.")
+        model.load_state_dict(torch.load(p_model_path))
+        print('Model loaded succesfully and proceeding to eval')
+
+        model.eval()
+
+        transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        image = Image.open(p_image_dir).convert("RGB")
+        input_image = transform(image)
+        input_image = input_image.unsqueeze(0)
+
+        with torch.no_grad():
+            output = model(input_image)
+
+        output_probs = torch.sigmoid(output).cpu().numpy()
+        binary_preds = (output_probs > 0.5).astype(int).flatten()
+
+        pred = binary_preds.tolist()
+
+        print(pred)
+
+        model_dict = dict(
+            type=args.model,
+            arch=model.model,
+            input_size=(256, 256)
+        )
+
+        gradcam = Grad_CAM(model_dict)
+
+        for i in range(len(pred)):
+            if pred[i] == 1:
+                print(f'iter {i} with pred {pred[i]} and class {classes[i]}')
+                mask, logit = gradcam(input_image, class_idx=i)
+
+                heatmap, result = visualize_cam(mask, input_image)
+
+                plt.imshow(result.permute(1, 2, 0).detach().numpy()) 
+                plt.title(f'GradCAM for Class {classes[i]}')
+                plt.axis('off')
+
+                cam_dir = os.path.join(p_model_dir, 'gradcam')
+                ensure_dir(cam_dir)
+                cam_dir_s = os.path.join(cam_dir, f'prediction_{args.pred_image[:-4]}_{classes[i]}.png')
+
+                plt.savefig(cam_dir_s)
 
 
-    # elif args.mode == 'pred'
 
     print('finish!')
 
@@ -86,11 +144,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', type=str, choices=['train','eval','pred'])
     parser.add_argument('--image_dir', default='./resized_images', type=str)
+    parser.add_argument('--pred_model', default='res50_asl2_Adam', type=str)
+    parser.add_argument('--pred_image', default='00000211_004.png', type=str)
     parser.add_argument('--train_csv', default='./labels/train_metadata.csv', type=str)
     parser.add_argument('--val_csv', default='./labels/val_metadata.csv', type=str)
     parser.add_argument('--test_csv', default='./labels/test_metadata.csv', type=str)
     parser.add_argument('--save_dir', default='./saves', type=str, help="directory where logs and model checkpoints will be saved")
-    parser.add_argument('--model', default='res18', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
+    parser.add_argument('--model', default='res50', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
     parser.add_argument('--pretrained', default=True, type=bool, help="true if model is pretrained by ImageNet")
     parser.add_argument('--thresh', default=False, type=bool, help="true eval is to use dynamic threshold")
     parser.add_argument('--max_epochs', default=20, type=int, help="maximum number of epochs for training")

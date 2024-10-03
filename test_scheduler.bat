@@ -12,6 +12,8 @@ for %%S in (%schedulers%) do (
     python main.py --scheduler %%S --num_iter %num_iter% --max_epochs %max_epochs% --model %model%
 )
 
+python main.py --scheduler cyclic --num_iter %num_iter% --max_epochs %max_epochs% --model %model% --lr 0.01
+
 :: Define the loss functions you want to test
 set optimizer=SGD SGD_Nesterov Adamax Adam AdamW RMSprop
 :: Set the num_iter value

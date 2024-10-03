@@ -3,6 +3,7 @@ from torchvision import transforms
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import SGD, Adamax, Adam, RMSprop, AdamW
 from torch.optim.lr_scheduler import CyclicLR, CosineAnnealingLR, ReduceLROnPlateau, _LRScheduler
@@ -18,6 +19,7 @@ from models import *
 
 import os
 import math
+import cv2
 
 
 
@@ -226,6 +228,145 @@ class AsymmetricLoss(nn.Module):
             return -loss.mean()
         else:
             return -loss.sum()
+
+# Oirginal function to work with Grad_cam
+def get_target_layer(model, model_type):
+    if model_type == 'res50':
+        return model.layer4[-1].conv3
+    elif model_type == 'dense121':
+        return model.features.denseblock4.denselayer16.conv2
+    elif model_type == 'efficientb0':
+        return model.features[-1]
+    else:
+        raise ValueError(f"Model type {model_type} not supported for GradCAM.")
+    
+# Code extracted from MIT licensed code Copyright (c) 2021 Alinstein Jose
+# Implementation of "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization"
+# From the paper "arXiv:1610.02391"
+class Grad_CAM(object):
+    """Calculate GradCAM salinecy map.
+
+    A simple example:
+
+        # initialize a model, model_dict and gradcam
+        resnet = torchvision.models.resnet101(pretrained=True)
+        resnet.eval()
+        model_dict = dict(model_type='resnet', arch=resnet, layer_name='layer4', input_size=(224, 224))
+        gradcam = GradCAM(model_dict)
+
+        # get an image and normalize with mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
+        img = load_img()
+        normed_img = normalizer(img)
+
+        # get a GradCAM saliency map on the class index 10.
+        mask, logit = gradcam(normed_img, class_idx=10)
+
+        # make heatmap from mask and synthesize saliency map using heatmap and img
+        heatmap, cam_result = visualize_cam(mask, img)
+
+
+    Args:
+        model_dict (dict): a dictionary that contains 'model_type', 'arch', layer_name', 'input_size'(optional) as keys.
+        verbose (bool): whether to print output size of the saliency map givien 'layer_name' and 'input_size' in model_dict.
+    """
+    def __init__(self, model_dict, verbose=False):
+        model_type = model_dict['type']
+        self.model_arch = model_dict['arch']
+
+        self.gradients = dict()
+        self.activations = dict()
+        def backward_hook(module, grad_input, grad_output):
+            self.gradients['value'] = grad_output[0]
+            return None
+        def forward_hook(module, input, output):
+            self.activations['value'] = output
+            return None
+
+        # Modification to the code to make it work with my models
+        target_layer = get_target_layer(self.model_arch, model_type)
+
+        target_layer.register_forward_hook(forward_hook)
+        target_layer.register_backward_hook(backward_hook)
+
+        if verbose:
+            try:
+                input_size = model_dict['input_size']
+            except KeyError:
+                print("please specify size of input image in model_dict. e.g. {'input_size':(224, 224)}")
+                pass
+            else:
+                device = 'cuda' if next(self.model_arch.parameters()).is_cuda else 'cpu'
+                self.model_arch(torch.zeros(1, 3, *(input_size), device=device))
+                print('saliency_map size :', self.activations['value'].shape[2:])
+
+
+    def forward(self, input, class_idx=None, retain_graph=False):
+        """
+        Args:
+            input: input image with shape of (1, 3, H, W)
+            class_idx (int): class index for calculating GradCAM.
+                    If not specified, the class index that makes the highest model prediction score will be used.
+        Return:
+            mask: saliency map of the same spatial dimension with input
+            logit: model output
+        """
+        b, c, h, w = input.size()
+        torch.set_grad_enabled(True)
+        logit = self.model_arch(input)
+
+        if class_idx is None:
+            score = logit[:, logit.max(1)[-1]].squeeze()
+        else:
+            score = logit[:, class_idx].squeeze()
+
+        self.model_arch.zero_grad()
+        # score = Variable(score, requires_grad=True)
+        score.backward(retain_graph=retain_graph)
+        gradients = self.gradients['value']
+        activations = self.activations['value']
+        b, k, u, v = gradients.size()
+
+        alpha = gradients.view(b, k, -1).mean(2)
+        #alpha = F.relu(gradients.view(b, k, -1)).mean(2)
+        weights = alpha.view(b, k, 1, 1)
+
+        saliency_map = (weights*activations).sum(1, keepdim=True)
+        saliency_map = F.relu(saliency_map)
+        saliency_map = F.upsample(saliency_map, size=(h, w), mode='bilinear', align_corners=False)
+        saliency_map_min, saliency_map_max = saliency_map.min(), saliency_map.max()
+        saliency_map = (saliency_map - saliency_map_min).div(saliency_map_max - saliency_map_min).data
+
+        return saliency_map, logit
+
+    def __call__(self, input, class_idx=None, retain_graph=False):
+        return self.forward(input, class_idx, retain_graph)
+
+# Code also extracted from MIT licensed code Copyright (c) 2021 Alinstein Jose
+# Implementation of "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization"
+def visualize_cam(mask, img):
+    """Make heatmap from mask and synthesize GradCAM result image using heatmap and img.
+    Args:
+        mask (torch.tensor): mask shape of (1, 1, H, W) and each element has value in range [0, 1]
+        img (torch.tensor): img shape of (1, 3, H, W) and each pixel value is in range [0, 1]
+        
+    Return:
+        heatmap (torch.tensor): heatmap img shape of (3, H, W)
+        result (torch.tensor): synthesized GradCAM result of same shape with heatmap.
+    """
+
+    # Squeeze the mask to make it 2D (H, W)
+    mask = mask.squeeze().cpu().detach().numpy()  # Convert to numpy and remove extra dimensions
+
+    heatmap = cv2.applyColorMap(np.uint8(255 * mask), cv2.COLORMAP_JET)
+    heatmap = torch.from_numpy(heatmap).permute(2, 0, 1).float().div(255)
+    b, g, r = heatmap.split(1)
+    heatmap = torch.cat([r, g, b])
+
+    result = heatmap + img
+    result = result.div(result.max()).squeeze()
+    result = result - result.min()
+    result = result / result.max()
+    return heatmap, result
     
 # Function to select optimizer
 def get_optimizer(params, optimizer='Adam', lr=1e-4, momentum=0.9, weight_decay=0.0):
@@ -305,12 +446,12 @@ def get_scheduler(optimizer, name='cyclic'):
     elif name == 'plateau1':
         scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=6)
     elif name == 'cyclic':
-        scheduler = CyclicLR(optimizer, base_lr=0.001, max_lr=0.01, step_size_up=500, mode='triangular')
-    elif name == 'cosine':
-        scheduler = CosineAnnealingLR(optimizer, T_max=10, eta_min=0)
+        scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=1000, mode='triangular2')
+    elif name == 'cosine': #redefine lr for this one since it's biggest point it's its initial lr
+        scheduler = CosineAnnealingLR(optimizer, T_max=7, eta_min=0)
     elif name == 'warmupcosine':
         scheduler = CosineAnnealingWarmupRestarts(optimizer, 
-                                          first_cycle_steps=12,
+                                          first_cycle_steps=10,
                                           cycle_mult=1,
                                           max_lr=0.01,
                                           min_lr=0.0001,
