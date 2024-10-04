@@ -14,7 +14,7 @@ from utils import Find_Optimal_Cutoff, ensure_dir
 
 
 # Evaluation function
-def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_threshold=True):
+def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_threshold=False):
     
     model_path = os.path.join(model_dir, 'best_model.pth')
 

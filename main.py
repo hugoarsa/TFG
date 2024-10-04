@@ -17,7 +17,7 @@ classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion',
                'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
 def main(args):
-    MODEL_NAME = f'{args.model}_{args.loss}_{args.scheduler}_{args.opt}'
+    MODEL_NAME = f'{args.model}_{args.loss}_{args.scheduler}_{args.opt}' #
 
     ensure_dir(args.save_dir)
 
@@ -34,7 +34,7 @@ def main(args):
                                                                  args.batch_size, 
                                                                  args.img_size)
 
-    model = get_model(args.model,args.pretrained)
+    model = get_model(args.model,args.untrained)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 
@@ -64,7 +64,7 @@ def main(args):
                        dataloaders['test'],
                        criterion,
                        model_dir,
-                       False)
+                       args.thresh)
         
     elif args.mode == 'eval':
         evaluate_model(device,
@@ -72,7 +72,7 @@ def main(args):
                        dataloaders['test'],
                        criterion,
                        model_dir,
-                       False)
+                       args.thresh)
         
     elif args.mode == 'pred':
         p_model_dir = os.path.join(args.save_dir, args.pred_model)
@@ -151,8 +151,8 @@ if __name__ == '__main__':
     parser.add_argument('--test_csv', default='./labels/test_metadata.csv', type=str)
     parser.add_argument('--save_dir', default='./saves', type=str, help="directory where logs and model checkpoints will be saved")
     parser.add_argument('--model', default='res50', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
-    parser.add_argument('--pretrained', default=True, type=bool, help="true if model is pretrained by ImageNet")
-    parser.add_argument('--thresh', default=False, type=bool, help="true eval is to use dynamic threshold")
+    parser.add_argument('--untrained', action='store_false', help="true if model is pretrained by ImageNet false if untrained")
+    parser.add_argument('--thresh', action='store_true', help="Use dynamic threshold")
     parser.add_argument('--max_epochs', default=20, type=int, help="maximum number of epochs for training")
     parser.add_argument('--num_iter', default=None, type=int, help="maximum iterations taken per epoch")
     parser.add_argument('--batch_size', default=32, type=int, help="batch size for data loaders")
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adamax','Adam','AdamW','RMSprop'])
-    parser.add_argument('--scheduler', default='plateau',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
+    parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
     parser.add_argument('--e_patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
     parser.add_argument('--s_patience', default=3, type=int, help="patience for the scheduler")
     args = parser.parse_args()
