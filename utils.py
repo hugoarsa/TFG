@@ -454,7 +454,7 @@ def get_scheduler(optimizer, name='cyclic'):
                                           first_cycle_steps=10,
                                           cycle_mult=1,
                                           max_lr=0.006,
-                                          min_lr=0.0001,
+                                          min_lr=0.00005,
                                           warmup_steps=3,
                                           gamma=0.8)
     else:

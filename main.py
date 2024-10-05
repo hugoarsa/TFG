@@ -17,8 +17,7 @@ classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion',
                'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
 def main(args):
-    MODEL_NAME = f'final_{args.model}_{args.max_epochs}_{args.untrained}' #_{args.loss}_{args.scheduler}_{args.opt}
-
+    MODEL_NAME = f'final_{args.model}_{args.loss}_{args.scheduler}_{args.opt}_{args.max_epochs}'
     ensure_dir(args.save_dir)
 
     model_dir = os.path.join(args.save_dir, MODEL_NAME)
@@ -57,7 +56,8 @@ def main(args):
                             scheduler,
                             args.max_epochs,
                             args.num_iter,
-                            args.s_patience)
+                            args.s_patience,
+                            args.e_patience)
         
         evaluate_model(device,
                        model,

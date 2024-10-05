@@ -10,7 +10,7 @@ import torch
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 
 
-def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer,scheduler, num_epochs, steps=None, s_patience=3, patience=10):
+def train_model(device, model, model_dir, train_loader, val_loader, criterion, optimizer,scheduler, num_epochs, steps=None, s_patience=3, patience=15):
     model.to(device)
 
     # Ensure model_dir exists
