@@ -17,7 +17,7 @@ classes = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion',
                'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
 def main(args):
-    MODEL_NAME = f'{args.model}_{args.loss}_{args.scheduler}_{args.opt}' #
+    MODEL_NAME = f'final_{args.model}_{args.max_epochs}_{args.untrained}' #_{args.loss}_{args.scheduler}_{args.opt}
 
     ensure_dir(args.save_dir)
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', default='res50', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
     parser.add_argument('--untrained', action='store_false', help="true if model is pretrained by ImageNet false if untrained")
     parser.add_argument('--thresh', action='store_true', help="Use dynamic threshold")
-    parser.add_argument('--max_epochs', default=20, type=int, help="maximum number of epochs for training")
+    parser.add_argument('--max_epochs', default=60, type=int, help="maximum number of epochs for training")
     parser.add_argument('--num_iter', default=None, type=int, help="maximum iterations taken per epoch")
     parser.add_argument('--batch_size', default=32, type=int, help="batch size for data loaders")
     parser.add_argument('--img_size', default=256, type=int, help="desired size for image dataset")
@@ -161,8 +161,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adamax','Adam','AdamW','RMSprop'])
     parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
-    parser.add_argument('--e_patience', default=10, type=int, help="patience the training has on epochs without learning before stopping")
-    parser.add_argument('--s_patience', default=3, type=int, help="patience for the scheduler")
+    parser.add_argument('--e_patience', default=15, type=int, help="patience the training has on epochs without learning before stopping")
+    parser.add_argument('--s_patience', default=6, type=int, help="patience for the scheduler")
     args = parser.parse_args()
 
     print(args)

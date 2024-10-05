@@ -444,7 +444,7 @@ def get_scheduler(optimizer, name='cyclic'):
     if name == 'plateau':
         scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
     elif name == 'plateau1':
-        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=6)
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=8)
     elif name == 'cyclic':
         scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=1000, mode='triangular2')
     elif name == 'cosine': #redefine lr for this one since it's biggest point it's its initial lr

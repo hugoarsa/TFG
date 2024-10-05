@@ -118,9 +118,9 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     print(f'Validation Loss: {val_loss:.4f}')
     print(f'Average Accuracy per Class: {mean_accuracy:.4f}')
     print(f'Mean AUROC: {mean_auc:.4f}')
-    print(f'Micro-Averaged Precision: {precision_micro:.4f}')
-    print(f'Micro-Averaged Recall: {recall_micro:.4f}')
-    print(f'Micro-Averaged F1-Score: {f1_micro:.4f}')
+    print(f'Weighted-Averaged Precision: {precision_micro:.4f}')
+    print(f'Weighted-Averaged Recall: {recall_micro:.4f}')
+    print(f'Weighted-Averaged F1-Score: {f1_micro:.4f}')
 
     # Save full classification report to file
     report_path = os.path.join(results_dir, 'classification_report.txt')
