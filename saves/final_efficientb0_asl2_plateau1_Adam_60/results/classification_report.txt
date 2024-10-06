@@ -1,0 +1,98 @@
+Validation Loss: 29.8346
+Average Accuracy per Class: 0.7392
+Mean AUROC: 0.8090
+Micro-Averaged Precision: 0.2806
+Micro-Averaged Recall: 0.7174
+Micro-Averaged F1-Score: 0.3834
+
+Classification Report per Class:
+Atelectasis:
+  precision: 0.3157
+  recall: 0.7227
+  f1-score: 0.4394
+  support: 2207.0000
+Cardiomegaly:
+  precision: 0.1537
+  recall: 0.8058
+  f1-score: 0.2582
+  support: 618.0000
+Consolidation:
+  precision: 0.1440
+  recall: 0.7087
+  f1-score: 0.2394
+  support: 951.0000
+Edema:
+  precision: 0.1078
+  recall: 0.7930
+  f1-score: 0.1898
+  support: 454.0000
+Effusion:
+  precision: 0.4159
+  recall: 0.7724
+  f1-score: 0.5407
+  support: 2553.0000
+Emphysema:
+  precision: 0.1709
+  recall: 0.8437
+  f1-score: 0.2843
+  support: 531.0000
+Fibrosis:
+  precision: 0.0590
+  recall: 0.7115
+  f1-score: 0.1090
+  support: 364.0000
+Hernia:
+  precision: 0.0147
+  recall: 0.8125
+  f1-score: 0.0289
+  support: 48.0000
+Infiltration:
+  precision: 0.4129
+  recall: 0.6461
+  f1-score: 0.5039
+  support: 4097.0000
+Mass:
+  precision: 0.1744
+  recall: 0.7286
+  f1-score: 0.2815
+  support: 1076.0000
+Nodule:
+  precision: 0.1719
+  recall: 0.6859
+  f1-score: 0.2749
+  support: 1280.0000
+Pleural_Thickening:
+  precision: 0.0967
+  recall: 0.6955
+  f1-score: 0.1698
+  support: 660.0000
+Pneumonia:
+  precision: 0.0346
+  recall: 0.6361
+  f1-score: 0.0655
+  support: 294.0000
+Pneumothorax:
+  precision: 0.2025
+  recall: 0.7725
+  f1-score: 0.3209
+  support: 1020.0000
+micro avg:
+  precision: 0.1907
+  recall: 0.7174
+  f1-score: 0.3013
+  support: 16153.0000
+macro avg:
+  precision: 0.1768
+  recall: 0.7382
+  f1-score: 0.2647
+  support: 16153.0000
+weighted avg:
+  precision: 0.2806
+  recall: 0.7174
+  f1-score: 0.3834
+  support: 16153.0000
+samples avg:
+  precision: 0.1857
+  recall: 0.5006
+  f1-score: 0.2509
+  support: 16153.0000

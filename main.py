@@ -24,8 +24,6 @@ def main(args):
 
     ensure_dir(model_dir)
 
-    # Potentially setting seeds (not now)
-
     dataloaders, dataset_sizes, class_counts = make_data_loaders(args.train_csv, 
                                                                  args.val_csv,
                                                                  args.test_csv, 

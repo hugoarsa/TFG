@@ -456,7 +456,7 @@ def get_scheduler(optimizer, name='cyclic'):
                                           max_lr=0.006,
                                           min_lr=0.00005,
                                           warmup_steps=3,
-                                          gamma=0.8)
+                                          gamma=0.85)
     else:
         raise ValueError(f"Unknown scheduler type '{name}'.")
     

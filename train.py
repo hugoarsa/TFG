@@ -5,6 +5,7 @@ import copy
 import os
 from tqdm import tqdm
 
+from torch.profiler import profile, record_function, ProfilerActivity, tensorboard_trace_handler
 import torch
 
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
@@ -30,10 +31,13 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
         
         start_time = time.time()  # Start time for training phase
 
+        #prof.start()
         # Training loop
         for i, batch in enumerate(tqdm(train_loader, desc="Training")):
             if steps and (i >= steps):
                 break
+
+            #prof.step()
             images = batch['image'].to(device)
             labels = batch['labels'].to(device).float()
 
@@ -49,6 +53,8 @@ def train_model(device, model, model_dir, train_loader, val_loader, criterion, o
 
             if isinstance(scheduler, torch.optim.lr_scheduler.CyclicLR):
                 scheduler.step()
+
+        #prof.stop()
 
         train_time = time.time() - start_time  # End time for training phase
 
