@@ -444,19 +444,21 @@ def get_scheduler(optimizer, name='cyclic'):
     if name == 'plateau':
         scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
     elif name == 'plateau1':
-        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=8)
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=6)
     elif name == 'cyclic':
-        scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=1000, mode='triangular2')
+        scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=3200, mode='triangular2')
+    elif name == 'cyclic2':
+        scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=3200, mode='triangular')
     elif name == 'cosine': #redefine lr for this one since it's biggest point it's its initial lr
         scheduler = CosineAnnealingLR(optimizer, T_max=7, eta_min=0)
     elif name == 'warmupcosine':
         scheduler = CosineAnnealingWarmupRestarts(optimizer, 
                                           first_cycle_steps=10,
                                           cycle_mult=1,
-                                          max_lr=0.006,
+                                          max_lr=0.001,
                                           min_lr=0.00005,
                                           warmup_steps=3,
-                                          gamma=0.85)
+                                          gamma=0.9)
     else:
         raise ValueError(f"Unknown scheduler type '{name}'.")
     

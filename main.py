@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adamax','Adam','AdamW','RMSprop'])
-    parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cosine', 'warmupcosine'])
+    parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cyclic2', 'cosine', 'warmupcosine'])
     parser.add_argument('--e_patience', default=15, type=int, help="patience the training has on epochs without learning before stopping")
     parser.add_argument('--s_patience', default=6, type=int, help="patience for the scheduler")
     args = parser.parse_args()
