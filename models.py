@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision import models
-from torchvision.models import ResNet18_Weights, ResNet50_Weights, DenseNet121_Weights, EfficientNet_B0_Weights, EfficientNet_B3_Weights
+from torchvision.models import ResNet18_Weights, ResNet50_Weights, DenseNet121_Weights, EfficientNet_B0_Weights, EfficientNet_B4_Weights
 
 class ResNet18(nn.Module):
     """
@@ -67,15 +67,15 @@ class EfficientNetB0(nn.Module):
         return self.model(x)
 
 
-class EfficientNetB3(nn.Module):
+class EfficientNetB4(nn.Module):
     """
-    EfficientNet-B3 model for multi-label classification.
+    EfficientNet-B5 model for multi-label classification.
     Source: "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks" by Tan and Le, 2019.
     https://arxiv.org/abs/1905.11946
     """
     def __init__(self, num_classes, pretrained=True):
-        super(EfficientNetB3, self).__init__()
-        self.model = models.efficientnet_b3(weights=EfficientNet_B3_Weights.DEFAULT if pretrained else None)
+        super(EfficientNetB4, self).__init__()
+        self.model = models.efficientnet_b4(weights=EfficientNet_B4_Weights.DEFAULT if pretrained else None)
         num_ftrs = self.model.classifier[1].in_features
         self.model.classifier[1] = nn.Linear(num_ftrs, num_classes)
 

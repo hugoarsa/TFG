@@ -51,7 +51,7 @@ def make_data_loaders(train_csv,val_csv,test_csv,image_dir,batch_size,image_size
     val_dataset = ChestXRay(df_dir=val_csv, image_dir=image_dir, transform=val_transforms)
     test_dataset = ChestXRay(df_dir=test_csv, image_dir=image_dir, transform=val_transforms)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, prefetch_factor=2)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
@@ -429,8 +429,8 @@ def get_model(model_name='dense121', pretrained=True):
         model = DenseNet121(num_classes=14, pretrained=pretrained)
     elif model_name == 'efficientb0':
         model = EfficientNetB0(num_classes=14, pretrained=pretrained)
-    elif model_name == 'efficientb3':
-        model = EfficientNetB3(num_classes=14, pretrained=pretrained)
+    elif model_name == 'efficientb4':
+        model = EfficientNetB4(num_classes=14, pretrained=pretrained)
     
     else:
         raise ValueError(f"Unknown model_name '{model_name}'.")
@@ -448,7 +448,7 @@ def get_scheduler(optimizer, name='cyclic'):
     elif name == 'cyclic':
         scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=3200, mode='triangular2')
     elif name == 'cyclic2':
-        scheduler = CyclicLR(optimizer, base_lr=0.00005, max_lr=0.006, step_size_up=3200, mode='triangular')
+        scheduler = CyclicLR(optimizer, base_lr=0.0001, max_lr=0.001, step_size_up=3200, mode='triangular')
     elif name == 'cosine': #redefine lr for this one since it's biggest point it's its initial lr
         scheduler = CosineAnnealingLR(optimizer, T_max=7, eta_min=0)
     elif name == 'warmupcosine':
@@ -459,6 +459,8 @@ def get_scheduler(optimizer, name='cyclic'):
                                           min_lr=0.00005,
                                           warmup_steps=3,
                                           gamma=0.9)
+    elif name == 'chexclusion':
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
     else:
         raise ValueError(f"Unknown scheduler type '{name}'.")
     

@@ -1,10 +1,14 @@
+nsys profile -w true -t cuda,nvtx,cublas -o efficientb0_default -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model efficientb0 --num_iter 50
 
 
-nsys profile -w true -t cuda,nvtx,cublas -o efficientb0_report_100iters_base -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model efficientb0 --num_iter 100
+nsys profile -w true -t cuda,nvtx,cublas -o efficientb0_4workers_2prefetch -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model efficientb0 --num_iter 50
 
-nsys profile -w true -t cuda,nvtx,cublas -o res50_report_100iters_base -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model res50 --num_iter 100
 
-nsys profile -w true -t cuda,nvtx,cublas -o dense121_report_100iters_base -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model dense121 --num_iter 100
+nsys profile -w true -t cuda,nvtx,cublas -o efficientb0_2workers_2prefetch -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model efficientb0 --num_iter 50
+
+nsys profile -w true -t cuda,nvtx,cublas -o res50_report_100iters_base -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model res50 --num_iter 50
+
+nsys profile -w true -t cuda,nvtx,cublas -o dense121_report_100iters_base -f true --gpu-metrics-devices=all --capture-range=cudaProfilerApi --capture-range-end=stop python main.py --max_epochs 1 --model dense121 --num_iter 50
 
 
 

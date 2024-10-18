@@ -128,7 +128,7 @@ def main(args):
                 ensure_dir(cam_dir)
                 cam_dir_s = os.path.join(cam_dir, f'prediction_{args.pred_image[:-4]}_{classes[i]}.png')
 
-                plt.savefig(cam_dir_s)
+                plt.savefig(cam_dir_s, bbox_inches='tight', pad_inches=0)
 
 
 
@@ -142,13 +142,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='train', type=str, choices=['train','eval','pred'])
     parser.add_argument('--image_dir', default='./resized_images', type=str)
-    parser.add_argument('--pred_model', default='res50_asl2_Adam', type=str)
+    parser.add_argument('--pred_model', default='final_efficientb0_asl2_cyclic_SGD_60', type=str)
     parser.add_argument('--pred_image', default='00000211_004.png', type=str)
     parser.add_argument('--train_csv', default='./labels/train_metadata.csv', type=str)
     parser.add_argument('--val_csv', default='./labels/val_metadata.csv', type=str)
     parser.add_argument('--test_csv', default='./labels/test_metadata.csv', type=str)
     parser.add_argument('--save_dir', default='./saves', type=str, help="directory where logs and model checkpoints will be saved")
-    parser.add_argument('--model', default='res50', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb3'])
+    parser.add_argument('--model', default='efficientb0', type=str, help="Neural Network model to be used", choices=['res18','res50','dense121','efficientb0','efficientb4'])
     parser.add_argument('--untrained', action='store_false', help="true if model is pretrained by ImageNet false if untrained")
     parser.add_argument('--thresh', action='store_true', help="Use dynamic threshold")
     parser.add_argument('--max_epochs', default=60, type=int, help="maximum number of epochs for training")
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss', default='asl2', type=str, choices=['bce','bce_w','focal','asymmetric','asymmetric_avg','asl1','asl2','asl3'])
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--opt', default='Adam', type=str, choices=['SGD', 'SGD_Nesterov', 'Adamax','Adam','AdamW','RMSprop'])
-    parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cyclic2', 'cosine', 'warmupcosine'])
+    parser.add_argument('--scheduler', default='plateau1',type=str, choices=['plateau', 'plateau1', 'cyclic', 'cyclic2', 'cosine', 'warmupcosine','chexclusion'])
     parser.add_argument('--e_patience', default=15, type=int, help="patience the training has on epochs without learning before stopping")
     parser.add_argument('--s_patience', default=6, type=int, help="patience for the scheduler")
     args = parser.parse_args()

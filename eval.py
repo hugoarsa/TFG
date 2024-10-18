@@ -35,7 +35,6 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
                'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 
                'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
 
-    # Ensure 'results' directory exists
     results_dir = os.path.join(model_dir, 'results')
     ensure_dir(results_dir)
 
@@ -55,7 +54,6 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     all_outputs = np.concatenate(all_outputs)
     all_labels = np.concatenate(all_labels)
 
-    # Threshold outputs using either a static threshold or optimal cutoff per class
     all_preds = np.zeros_like(all_outputs)
 
     print('Obtaining Cutoff for Predictions')
@@ -106,7 +104,10 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     # Calculate averaged metrics
     accuracy_per_class = [accuracy_score(all_labels[:, i], all_preds[:, i]) for i in range(all_labels.shape[1])]
     mean_accuracy = np.mean(accuracy_per_class)
-    mean_auc = np.nanmean(auc_scores)  # Averaged AUROC
+    mean_auc = np.nanmean(auc_scores) 
+
+    print(accuracy_per_class)
+    print(auc_scores)
 
     print('Micro')
 
