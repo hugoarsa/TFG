@@ -7,12 +7,6 @@ from PIL import Image
 
 class ChestXRay(Dataset):
     def __init__(self, df_dir, image_dir, transform=None):
-        """
-        Args:
-            df_dir: Path to the csv file with image names and labels.
-            image_dir: Directory with all the images with the labels.
-            transform: Optional transform to be applied on a sample.
-        """
         self.classes = ['Atelectasis',
                         'Cardiomegaly',
                         'Consolidation',
@@ -40,14 +34,11 @@ class ChestXRay(Dataset):
         self.total_labels = self.class_count.sum()
 
     def __getitem__(self, idx):
-        # Get image path
         img_name = os.path.join(self.image_dir, self.images.iloc[idx])
         image = Image.open(img_name).convert("RGB")
         
-        # Get labels
         labels = np.array(self.labels[idx])
         
-        # Apply transformations if any
         if self.transform:
             image = self.transform(image)
 

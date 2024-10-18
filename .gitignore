@@ -1,5 +1,4 @@
 # Ignore heavy checkpoints
-
 checkpoint.pth
 
 # Ignore Python bytecode files

@@ -22,13 +22,10 @@ import math
 import cv2
 
 
-
-# Ensure the directory exists
 def ensure_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-# Function to create data loaders accodring to the selected image size and batch_size
 def make_data_loaders(train_csv,val_csv,test_csv,image_dir,batch_size,image_size):
     normalize = transforms.Normalize([0.485, 0.456, 0.406],
                                      [0.229, 0.224, 0.225])
@@ -368,7 +365,6 @@ def visualize_cam(mask, img):
     result = result / result.max()
     return heatmap, result
     
-# Function to select optimizer
 def get_optimizer(params, optimizer='Adam', lr=1e-4, momentum=0.9, weight_decay=0.0):
     """
     Loads and returns the selected optimizer
@@ -387,8 +383,7 @@ def get_optimizer(params, optimizer='Adam', lr=1e-4, momentum=0.9, weight_decay=
         return RMSprop(params, lr=lr, momentum=momentum, weight_decay=weight_decay)
     else:
         raise Exception('Unknown optimizer : {}'.format(optimizer))
-    
-# Function to select loss function
+
 def get_loss(loss_type='asl1', counts=None, device='cpu', beta=0.99):
 
     if loss_type == 'bce':
@@ -418,7 +413,6 @@ def get_loss(loss_type='asl1', counts=None, device='cpu', beta=0.99):
     
     return loss_fn
 
-# Function to select model
 def get_model(model_name='dense121', pretrained=True):
 
     if model_name == 'res18':
@@ -437,8 +431,6 @@ def get_model(model_name='dense121', pretrained=True):
     
     return model
 
-
-# Function to select scheduler
 def get_scheduler(optimizer, name='cyclic'):
 
     if name == 'plateau':

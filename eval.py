@@ -3,8 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import (roc_auc_score, roc_curve, confusion_matrix, classification_report, 
-                             precision_score, recall_score, f1_score, accuracy_score)
+from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, classification_report, precision_score, recall_score, f1_score, accuracy_score
 import seaborn as sns
 
 from tqdm import tqdm
@@ -12,8 +11,6 @@ from tqdm import tqdm
 from utils import Find_Optimal_Cutoff, ensure_dir
 
 
-
-# Evaluation function
 def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_threshold=False):
     
     model_path = os.path.join(model_dir, 'best_model.pth')
@@ -67,12 +64,11 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
         
     print('Plotting and storing')
 
-    # Plot ROC Curves
     plt.figure(figsize=(10, 8))
     auc_scores = []
 
     for i, class_name in enumerate(classes):
-        if np.unique(all_labels[:, i]).size > 1:  # Check for both classes in the label
+        if np.unique(all_labels[:, i]).size > 1:
             fpr, tpr, _ = roc_curve(all_labels[:, i], all_outputs[:, i])
             auc = roc_auc_score(all_labels[:, i], all_outputs[:, i])
             auc_scores.append(auc)
@@ -85,7 +81,6 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     plt.savefig(os.path.join(results_dir, 'roc_curves.png'))
     plt.close()
 
-    # Confusion Matrices
     for i, class_name in enumerate(classes):
         cm = confusion_matrix(all_labels[:, i], all_preds[:, i])
         plt.figure(figsize=(5, 4))
@@ -98,10 +93,8 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
 
     print('Classification report')
 
-    # Classification Report
     report = classification_report(all_labels, all_preds, target_names=classes, output_dict=True, zero_division=0)
 
-    # Calculate averaged metrics
     accuracy_per_class = [accuracy_score(all_labels[:, i], all_preds[:, i]) for i in range(all_labels.shape[1])]
     mean_accuracy = np.mean(accuracy_per_class)
     mean_auc = np.nanmean(auc_scores) 
@@ -115,7 +108,6 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     recall_micro = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
     f1_micro = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
 
-    # Output classification report per class and overall metrics
     print(f'Validation Loss: {val_loss:.4f}')
     print(f'Average Accuracy per Class: {mean_accuracy:.4f}')
     print(f'Mean AUROC: {mean_auc:.4f}')
@@ -123,7 +115,6 @@ def evaluate_model(device, model, test_loader, criterion, model_dir, use_static_
     print(f'Weighted-Averaged Recall: {recall_micro:.4f}')
     print(f'Weighted-Averaged F1-Score: {f1_micro:.4f}')
 
-    # Save full classification report to file
     report_path = os.path.join(results_dir, 'classification_report.txt')
     with open(report_path, 'w') as f:
         f.write(f'Validation Loss: {val_loss:.4f}\n')

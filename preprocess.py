@@ -22,7 +22,7 @@ def undersample_negatives(df, labels, ratio=0.3):
     return pd.concat([positive, negative])
 
 def main(args):
-    # Get the labels and read the original metadata
+    #Get the labels and read the original metadata
     labels = ['Atelectasis',
             'Cardiomegaly',
             'Consolidation',
@@ -40,13 +40,13 @@ def main(args):
 
     metadata = pd.read_csv('./labels/Data_Entry_2017_v2020.csv', delimiter=',')
 
-    # Encode the labels with multi-label friendly encoding
+    #Encode the labels with multi-label friendly encoding
     for label in labels:
         metadata[label] = metadata['Finding Labels'].apply(lambda x: 1 if label in x else 0)
 
     metadata = metadata.drop(columns=['Finding Labels', 'Follow-up #','Patient Age', 'Patient Gender', 'View Position', 'OriginalImage[Width','Height]', 'OriginalImagePixelSpacing[x', 'y]'])
 
-    # Get the test train and val splits according to the patient ID so no patients end up split between groups
+    #Get the test train and val splits according to the patient ID so no patients end up split between groups
     gss_test = GroupShuffleSplit(test_size=0.2, n_splits=1, random_state=42)
     train_val_idx, test_idx = next(gss_test.split(metadata, groups=metadata['Patient ID']))
 
@@ -60,13 +60,13 @@ def main(args):
     val_metadata = train_val_metadata.iloc[val_idx]
 
 
-    # Drop the column of patient ID
+    #Drop the column of patient ID
     train_metadata = train_metadata.drop(columns=['Patient ID'])
     val_metadata = val_metadata.drop(columns=['Patient ID'])
     test_metadata = test_metadata.drop(columns=['Patient ID'])
 
 
-    # Undersample "No Findings"
+    #Undersample "No Findings"
     print(f'Applying a ratio of undersample of: {args}')
     train_metadata = undersample_negatives(train_metadata,labels,args)
     val_metadata = undersample_negatives(val_metadata,labels,args)
@@ -83,5 +83,4 @@ if __name__ == "__main__":
     parser.add_argument('--ratio', type=float, default=0.3, help='Ratio of positive to negative samples for undersampling (default: 0.3)')
     args = parser.parse_args()
 
-    # Call the main function with the ratio argument
     main(args.ratio)
