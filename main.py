@@ -65,6 +65,7 @@ def main(args):
                        args.thresh)
         
     elif args.mode == 'eval':
+        model_dir = os.path.join(args.save_dir, args.pred_model)
         evaluate_model(device,
                        model,
                        dataloaders['test'],
