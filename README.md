@@ -19,8 +19,11 @@
 ---
 
 ## Project Overview
+
 This is the implementation of the code used for the Bachelors Thesis of Hugo Aranda at Universitat Politècnica de Catalunya. It includes an implementation of a particular Deep Learning architecture for the CheXRay-14 dataset presented in the paper by Wang et al. (2017) [ChestX-Ray8: Hospital-Scale Chest X-Ray Database and Benchmarks on Weakly-Supervised Classification and Localization of Common Thorax Diseases]([https://doi.ieeecomputersociety.org/10.1109/CVPR.2017.369](https://arxiv.org/abs/1705.02315)).
+
 The implementation has a variety of configuration options through flags that can be used in order to modify the Deep Learning architecture to fit various alternatives.
+
 ---
 
 ## Installation
@@ -121,7 +124,7 @@ The following flags are available for generating plots:
 ---
 
 ## Results
-See results at the published Memory for the project in the upc commons field.
+See results at the published Memory for the project in the [upc commons webpage]([https://upcommons.upc.edu/handle/2117/28592]).
 
 ---
 
