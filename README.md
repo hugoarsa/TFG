@@ -24,6 +24,8 @@ This is the implementation of the code used for the Bachelors Thesis of Hugo Ara
 
 The implementation has a variety of configuration options through flags that can be used in order to modify the Deep Learning architecture to fit various alternatives.
 
+The associated documentation published on the UPC commons page is on the Memoria_HugoAranda_TFG.pdf document. This document contains all of the different experiments that generated the best performing model, the theoretical background for the project and different project management elements.
+
 ---
 
 ## Installation
